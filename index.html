@@ -22,3 +22,29 @@ result.classList.remove('hidden');
 result.textContent = data.analysis;
 
 status.textContent = 'Analysis complete!';
+<script>
+status.textContent = 'AI is analyzing the video…';
+bar.style.width = '40%';
+
+const response = await fetch('/api/analyze', {
+  method: 'POST',
+  headers: {
+    'Content-Type': file.type || 'video/mp4'
+  },
+  body: file
+});
+
+const data = await response.json();
+
+if (!response.ok) {
+  throw new Error(data.error || 'Analysis failed');
+}
+
+bar.style.width = '100%';
+
+result.classList.remove('hidden');
+
+result.textContent = data.analysis;
+
+status.textContent = 'Analysis complete!';
+</script>
