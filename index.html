@@ -1,50 +1,44 @@
-status.textContent = 'AI is analyzing the video…';
-bar.style.width = '40%';
-
-const response = await fetch('/api/analyze', {
-  method: 'POST',
-  headers: {
-    'Content-Type': file.type || 'video/mp4'
-  },
-  body: file
-});
-
-const data = await response.json();
-
-if (!response.ok) {
-  throw new Error(data.error || 'Analysis failed');
-}
-
-bar.style.width = '100%';
-
-result.classList.remove('hidden');
-
-result.textContent = data.analysis;
-
-status.textContent = 'Analysis complete!';
 <script>
-status.textContent = 'AI is analyzing the video…';
-bar.style.width = '40%';
+btn.addEventListener('click', async () => {
+  const file = input.files[0];
 
-const response = await fetch('/api/analyze', {
-  method: 'POST',
-  headers: {
-    'Content-Type': file.type || 'video/mp4'
-  },
-  body: file
+  if (!file) return;
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+
+  status.textContent = 'AI is analyzing the video…';
+  bar.style.width = '40%';
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': file.type || 'video/mp4'
+      },
+      body: file
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Analysis failed');
+    }
+
+    bar.style.width = '100%';
+
+    result.classList.remove('hidden');
+    result.textContent = data.analysis;
+
+    status.textContent = 'Analysis complete!';
+  } catch (error) {
+    result.classList.remove('hidden');
+    result.textContent = 'Error: ' + error.message;
+    status.textContent = 'Analysis failed.';
+  } finally {
+    btn.disabled = false;
+    loading.classList.add('hidden');
+  }
 });
-
-const data = await response.json();
-
-if (!response.ok) {
-  throw new Error(data.error || 'Analysis failed');
-}
-
-bar.style.width = '100%';
-
-result.classList.remove('hidden');
-
-result.textContent = data.analysis;
-
-status.textContent = 'Analysis complete!';
 </script>
