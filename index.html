@@ -1,44 +1,255 @@
-<script>
-btn.addEventListener('click', async () => {
-  const file = input.files[0];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  if (!file) return;
+  <title>YT Safe Check</title>
 
-  btn.disabled = true;
-  loading.classList.remove('hidden');
-  result.classList.add('hidden');
-
-  status.textContent = 'AI is analyzing the video…';
-  bar.style.width = '40%';
-
-  try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: {
-        'Content-Type': file.type || 'video/mp4'
-      },
-      body: file
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Analysis failed');
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    bar.style.width = '100%';
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
 
-    result.classList.remove('hidden');
-    result.textContent = data.analysis;
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+    }
 
-    status.textContent = 'Analysis complete!';
-  } catch (error) {
-    result.classList.remove('hidden');
-    result.textContent = 'Error: ' + error.message;
-    status.textContent = 'Analysis failed.';
-  } finally {
-    btn.disabled = false;
-    loading.classList.add('hidden');
-  }
-});
-</script>
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 30px;
+    }
+
+    .upload-box {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 30px 20px;
+      text-align: center;
+      background: #f8fafc;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      margin: 15px 0;
+    }
+
+    #fileName {
+      color: #475569;
+      margin: 10px 0 20px;
+      word-break: break-word;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #111827;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #loading {
+      margin-top: 25px;
+    }
+
+    #status {
+      margin-bottom: 10px;
+      color: #475569;
+      text-align: center;
+    }
+
+    .progress {
+      width: 100%;
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #bar {
+      width: 0%;
+      height: 100%;
+      background: #111827;
+      transition: width 0.3s ease;
+    }
+
+    #result {
+      margin-top: 25px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <h1>YT Safe Check</h1>
+
+    <p class="subtitle">
+      Check your video with AI before uploading it to YouTube.
+    </p>
+
+    <div class="upload-box">
+
+      <input
+        type="file"
+        id="video"
+        accept="video/*"
+      >
+
+      <div id="fileName">
+        No video selected
+      </div>
+
+      <button id="analyze" disabled>
+        Analyze Video
+      </button>
+
+    </div>
+
+    <div id="loading" class="hidden">
+
+      <div id="status">
+        AI is analyzing the video…
+      </div>
+
+      <div class="progress">
+        <div id="bar"></div>
+      </div>
+
+    </div>
+
+    <div id="result" class="hidden"></div>
+
+    <div class="note">
+      This is an AI-based pre-check and does not guarantee YouTube enforcement results.
+    </div>
+
+  </main>
+
+  <script>
+    const input = document.getElementById('video');
+    const nameBox = document.getElementById('fileName');
+    const btn = document.getElementById('analyze');
+    const loading = document.getElementById('loading');
+    const result = document.getElementById('result');
+    const bar = document.getElementById('bar');
+    const status = document.getElementById('status');
+
+    input.addEventListener('change', () => {
+      if (input.files[0]) {
+        nameBox.textContent = input.files[0].name;
+        btn.disabled = false;
+      } else {
+        nameBox.textContent = 'No video selected';
+        btn.disabled = true;
+      }
+    });
+
+    btn.addEventListener('click', async () => {
+
+      const file = input.files[0];
+
+      if (!file) return;
+
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      result.classList.add('hidden');
+
+      status.textContent = 'AI is analyzing the video…';
+      bar.style.width = '40%';
+
+      try {
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'video/mp4'
+          },
+          body: file
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Analysis failed');
+        }
+
+        bar.style.width = '100%';
+
+        result.classList.remove('hidden');
+
+        result.textContent =
+          data.analysis || 'No analysis was returned.';
+
+        status.textContent = 'Analysis complete!';
+
+      } catch (error) {
+
+        result.classList.remove('hidden');
+
+        result.textContent =
+          'Error: ' + error.message;
+
+        status.textContent = 'Analysis failed.';
+
+      } finally {
+
+        btn.disabled = false;
+
+      }
+
+    });
+  </script>
+
+</body>
+</html>
