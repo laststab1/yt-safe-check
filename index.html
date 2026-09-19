@@ -1,73 +1,24 @@
-<script>
-const input = document.getElementById('video');
-const nameBox = document.getElementById('fileName');
-const btn = document.getElementById('analyze');
-const loading = document.getElementById('loading');
-const result = document.getElementById('result');
-const bar = document.getElementById('bar');
-const status = document.getElementById('status');
+status.textContent = 'AI is analyzing the video…';
+bar.style.width = '40%';
 
-input.addEventListener('change', () => {
-  if (input.files[0]) {
-    nameBox.textContent = input.files[0].name;
-    btn.disabled = false;
-  }
+const response = await fetch('/api/analyze', {
+  method: 'POST',
+  headers: {
+    'Content-Type': file.type || 'video/mp4'
+  },
+  body: file
 });
 
-btn.addEventListener('click', async () => {
-  const file = input.files[0];
+const data = await response.json();
 
-  if (!file) return;
+if (!response.ok) {
+  throw new Error(data.error || 'Analysis failed');
+}
 
-  btn.disabled = true;
-  loading.classList.remove('hidden');
-  result.classList.add('hidden');
+bar.style.width = '100%';
 
-  status.textContent = 'Uploading video for AI analysis…';
-  bar.style.width = '15%';
+result.classList.remove('hidden');
 
-  try {
-    const formData = new FormData();
-    formData.append('video', file);
+result.textContent = data.analysis;
 
-    status.textContent = 'AI is analyzing the video…';
-    bar.style.width = '40%';
-
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      body: formData
-    });
-
-    bar.style.width = '80%';
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Analysis failed');
-    }
-
-    bar.style.width = '100%';
-    status.textContent = 'Analysis complete!';
-
-    document.getElementById('headline').textContent =
-      data.result || 'AI analysis completed';
-
-    result.querySelector('.row:nth-of-type(1) small').textContent =
-      'AI analysis: ' + (data.result || 'No result');
-
-    loading.classList.add('hidden');
-    result.classList.remove('hidden');
-
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: 'smooth'
-    });
-
-  } catch (error) {
-    loading.classList.add('hidden');
-    btn.disabled = false;
-
-    alert('Error: ' + error.message);
-  }
-});
-</script>
+status.textContent = 'Analysis complete!';
