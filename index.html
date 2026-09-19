@@ -1,90 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0b0f">
-<title>YT SafeCheck</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#0b0b0f;color:#f7f7f8;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.app{max-width:520px;margin:auto;min-height:100vh;padding:22px 16px 35px}
-h1{font-size:29px;margin:8px 0 6px}.sub{color:#a8a8b3;font-size:14px;line-height:1.5;margin-bottom:24px}
-.card{background:#14141a;border:1px solid #25252e;border-radius:20px;padding:18px;margin-bottom:14px}
-.drop{border:1.5px dashed #454552;border-radius:16px;padding:30px 15px;text-align:center;cursor:pointer}
-.drop b{display:block;font-size:17px;margin:9px 0 5px}.drop span{font-size:13px;color:#9999a6}
-input{display:none}.icon{font-size:38px}.file{margin-top:13px;font-size:13px;color:#c9c9d3;word-break:break-word}
-button{width:100%;border:0;border-radius:14px;padding:15px;font-size:16px;font-weight:700;background:#fff;color:#111;cursor:pointer;margin-top:14px}
-button:disabled{opacity:.45;cursor:not-allowed}.hidden{display:none}
-.loader{height:8px;background:#292933;border-radius:99px;overflow:hidden;margin:15px 0}.bar{height:100%;width:0;background:#fff;border-radius:99px;transition:width .25s}
-.status{text-align:center;color:#b9b9c5;font-size:13px}.result{text-align:center}
-.badge{display:inline-block;padding:8px 13px;border-radius:99px;background:#262630;font-weight:700;font-size:13px}
-.note{font-size:12px;color:#92929f;line-height:1.5;margin-top:15px}
-.row{display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #25252e;text-align:left}.row:last-child{border:0}
-.dot{width:9px;height:9px;border-radius:50%;background:#888}.green{background:#61d98b}.yellow{background:#e7c65b}.red{background:#ee6969}
-.footer{text-align:center;color:#666672;font-size:11px;margin-top:20px}
-</style>
-</head>
-<body>
-<div class="app">
-  <h1>YT SafeCheck</h1>
-  <div class="sub">Check a video for potential YouTube Community Guidelines concerns before you upload it.</div>
-
-  <div class="card">
-    <label class="drop" for="video">
-      <div class="icon">🎥</div>
-      <b>Select your video</b>
-      <span>Fast mobile-friendly checker</span>
-      <input id="video" type="file" accept="video/*">
-      <div id="fileName" class="file">No video selected</div>
-    </label>
-    <button id="analyze" disabled>Analyze Video</button>
-  </div>
-
-  <div id="loading" class="card hidden">
-    <div class="status" id="status">Preparing analysis…</div>
-    <div class="loader"><div class="bar" id="bar"></div></div>
-    <div class="status">This demo does not upload your video.</div>
-  </div>
-
-  <div id="result" class="card hidden result">
-    <div class="badge">DEMO RESULT</div>
-    <h2 id="headline">Ready for AI connection</h2>
-    <div class="row"><i class="dot yellow"></i><div><b>Community Guidelines</b><br><small>Real policy analysis requires the AI backend.</small></div></div>
-    <div class="row"><i class="dot yellow"></i><div><b>Copyright</b><br><small>This prototype does not perform a Content ID check.</small></div></div>
-    <div class="row"><i class="dot green"></i><div><b>Privacy</b><br><small>Your selected file stays in this browser in this demo.</small></div></div>
-    <div class="note">⚠️ An AI checker can only estimate risk. It cannot guarantee that YouTube will not remove a video or issue a strike.</div>
-    <button onclick="location.reload()">Check Another Video</button>
-  </div>
-
-  <div class="footer">YT SafeCheck • Prototype</div>
-</div>
-
 <script>
-const input=document.getElementById('video'), nameBox=document.getElementById('fileName');
-const btn=document.getElementById('analyze'), loading=document.getElementById('loading');
-const result=document.getElementById('result'), bar=document.getElementById('bar'), status=document.getElementById('status');
+const input = document.getElementById('video');
+const nameBox = document.getElementById('fileName');
+const btn = document.getElementById('analyze');
+const loading = document.getElementById('loading');
+const result = document.getElementById('result');
+const bar = document.getElementById('bar');
+const status = document.getElementById('status');
 
-input.addEventListener('change',()=>{
-  if(input.files[0]){
-    nameBox.textContent=input.files[0].name;
-    btn.disabled=false;
+input.addEventListener('change', () => {
+  if (input.files[0]) {
+    nameBox.textContent = input.files[0].name;
+    btn.disabled = false;
   }
 });
-btn.addEventListener('click',()=>{
-  btn.disabled=true; loading.classList.remove('hidden');
-  let p=0;
-  const messages=['Reading video…','Preparing transcript…','Checking potential policy signals…','Building report…'];
-  let i=0;
-  const timer=setInterval(()=>{
-    p+=8; bar.style.width=Math.min(p,100)+'%';
-    if(p%24===0 && i<messages.length) status.textContent=messages[i++];
-    if(p>=100){
-      clearInterval(timer);
-      loading.classList.add('hidden'); result.classList.remove('hidden');
-      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+
+btn.addEventListener('click', async () => {
+  const file = input.files[0];
+
+  if (!file) return;
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+
+  status.textContent = 'Uploading video for AI analysis…';
+  bar.style.width = '15%';
+
+  try {
+    const formData = new FormData();
+    formData.append('video', file);
+
+    status.textContent = 'AI is analyzing the video…';
+    bar.style.width = '40%';
+
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      body: formData
+    });
+
+    bar.style.width = '80%';
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Analysis failed');
     }
-  },90);
+
+    bar.style.width = '100%';
+    status.textContent = 'Analysis complete!';
+
+    document.getElementById('headline').textContent =
+      data.result || 'AI analysis completed';
+
+    result.querySelector('.row:nth-of-type(1) small').textContent =
+      'AI analysis: ' + (data.result || 'No result');
+
+    loading.classList.add('hidden');
+    result.classList.remove('hidden');
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
+
+  } catch (error) {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+
+    alert('Error: ' + error.message);
+  }
 });
 </script>
-</body>
-</html>
